@@ -91,10 +91,7 @@ public class QuizActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    private void loadRandomQuestion() {
-
-        System.out.println("--------------------------------------");
-
+    private void clearAnimation() {
         optionA.setBackgroundColor(getResources().getColor(R.color.answr_options));
         optionB.setBackgroundColor(getResources().getColor(R.color.answr_options));
         optionC.setBackgroundColor(getResources().getColor(R.color.answr_options));
@@ -104,11 +101,13 @@ public class QuizActivity extends Activity implements View.OnClickListener {
         optionB.clearAnimation();
         optionC.clearAnimation();
         optionD.clearAnimation();
+    }
+    private void loadRandomQuestion() {
 
-        if (count == 5){
-            showFinishMessage();
-            return;
-        }
+        System.out.println("--------------------------------------");
+
+        clearAnimation();
+
         answerSelected = false;
         Collections.shuffle(countryDetailsList);
         selectedQuestion = countryDetailsList.get(0);
@@ -130,8 +129,6 @@ public class QuizActivity extends Activity implements View.OnClickListener {
 
             if(optionName.length() == 0 || optioncapital.length() == 0)
                 loadRandomQuestion();
-            System.out.println("options name : " + countryDetailsList.get(i).get("name"));
-            System.out.println("options capital : "+countryDetailsList.get(i).get("capital"));
         }
         Collections.shuffle(options);
 
@@ -143,7 +140,9 @@ public class QuizActivity extends Activity implements View.OnClickListener {
 
         System.out.println("selectedQuestion name :"+selectedQuestion.get("name"));
         System.out.println("selectedQuestion capital :"+selectedQuestion.get("capital"));
-
+        for (JSONObject object : options){
+            System.out.println("options capital : "+object.get("capital"));
+        }
     }
 
     private void checkSelectedAnswer(String answer, View viewSelected) {
@@ -177,26 +176,45 @@ public class QuizActivity extends Activity implements View.OnClickListener {
         anim.setRepeatCount(Animation.INFINITE);
         view.startAnimation(anim);
 
-        Runnable task = new Runnable() {
-            public void run() {
-                loadRandomQuestion();
-            }
-        };
-        worker.schedule(task, 3, TimeUnit.SECONDS);
+        Runnable task = null;
+        if (count == 10){
+            task = new Runnable() {
+                public void run() {
+                    QuizActivity.this.runOnUiThread(new Runnable() {
+                        public void run() {
+                            showFinishMessage();
+                        }
+                    });
+                }
+            };
+
+        } else {
+            task = new Runnable() {
+                public void run() {
+                    loadRandomQuestion();
+                }
+            };
+        }
+        worker.schedule(task, 2, TimeUnit.SECONDS);
     }
 
     private void showFinishMessage() {
 
+        clearAnimation();
         AlertDialog alertDialog = new AlertDialog.Builder(
                 QuizActivity.this).create();
 
         // Seting Dialog Title
-        alertDialog.setTitle("End..!");
+        if(currect > count/2){
+            alertDialog.setTitle("Congratzzz..!");
+        } else {
+            alertDialog.setTitle("Opsss..!");
+        }
         alertDialog.setMessage(currect+" out of "+count+" are currect");
 
         alertDialog.setIcon(android.R.drawable.ic_dialog_alert);
 
-        alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
+        alertDialog.setButton("End", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 finish();
             }
